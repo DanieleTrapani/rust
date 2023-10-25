@@ -1,17 +1,31 @@
 use std::env;
 use std::fs;
+use std::process;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let (query, filepath) = parse_config(&args);
+    let config = Config::build(&args).unwrap_or_else(|e| {
+        println!("Problem parsing arguments: {e}");
+        process::exit(1);
+    });
 
-    let contents = fs::read_to_string(filepath).expect("Should be able to read the file");
+    let contents = fs::read_to_string(config.filepath).expect("Should be able to read the file");
 
     println!("Text:\n{contents}");
 }
 
-fn parse_config(args: &[String]) -> (&str, &str) {
-    let query = &args[1];
-    let filepath = &args[2];
-    (query, filepath)
+struct Config {
+    query: String,
+    filepath: String,
+}
+
+impl Config {
+    fn build(args: &[String]) -> Result<Config, &'static str> {
+        if args.len() < 3 {
+            return Err("not enough arguments.");
+        }
+        let query = args[1].clone();
+        let filepath = args[2].clone();
+        Ok(Config { query, filepath })
+    }
 }
